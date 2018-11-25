@@ -38,7 +38,7 @@ import haxe.macro.Expr;
 		
 		var config = {
 			
-			build: "337",
+			build: "1",
 			company: "Sean Bashaw",
 			file: "FrozenLight",
 			fps: 60,
@@ -110,7 +110,7 @@ import haxe.macro.Expr;
 		#if (lime >= "7.0.0")
 		ManifestResources.init (config);
 		
-		app.meta["build"] = "337";
+		app.meta["build"] = "1";
 		app.meta["company"] = "Sean Bashaw";
 		app.meta["file"] = "FrozenLight";
 		app.meta["name"] = "FrozenLight";

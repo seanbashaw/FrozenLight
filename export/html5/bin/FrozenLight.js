@@ -807,9 +807,9 @@ ApplicationMain.create = function(config) {
 	ManifestResources.init(config);
 	var _this = app.meta;
 	if(__map_reserved["build"] != null) {
-		_this.setReserved("build","342");
+		_this.setReserved("build","1");
 	} else {
-		_this.h["build"] = "342";
+		_this.h["build"] = "1";
 	}
 	var _this1 = app.meta;
 	if(__map_reserved["company"] != null) {
@@ -4303,14 +4303,16 @@ Lambda.array = function(it) {
 	}
 	return a;
 };
-var Laser = function(X,Y,dir,P) {
+var Laser = function(X,Y,dir,P,l) {
 	this.minLaser = 1000;
 	this.lineStyle = { color : -65536, thickness : 1};
 	this.laserLength = 1000;
+	this.laserId = -1;
 	this.direction = Laser.RIGHT;
 	this.bounceLaser = null;
 	this.x = X;
 	this.y = Y;
+	this.level = l;
 	this.direction = dir;
 	this.plane = P;
 };
@@ -4319,22 +4321,33 @@ Laser.__name__ = ["Laser"];
 Laser.prototype = {
 	bounceLaser: null
 	,direction: null
+	,laserId: null
 	,x: null
 	,y: null
 	,plane: null
 	,obj: null
+	,level: null
 	,laserLength: null
 	,lineStyle: null
 	,minLaser: null
+	,getID: function() {
+		return this.laserId;
+	}
 	,distance: function(x1,y1,x2,y2) {
 		return Math.sqrt(Math.pow(x1 - x2,2) + Math.pow(y1 - y2,2));
 	}
+	,getLevel: function() {
+		return this.level;
+	}
+	,addLaser: function(l) {
+		if(!this.level.hasLaser(this.bounceLaser)) {
+			this.laserId = this.level.addLaser(l);
+			haxe_Log.trace(this.laserId,{ fileName : "Laser.hx", lineNumber : 50, className : "Laser", methodName : "addLaser"});
+			this.bounceLaser = l;
+		}
+	}
 	,checkFor: function(b) {
 		b.checkLaser(this);
-		if(this.bounceLaser != null) {
-			haxe_Log.trace(this.bounceLaser.laserLength,{ fileName : "Laser.hx", lineNumber : 42, className : "Laser", methodName : "checkFor"});
-			this.bounceLaser.checkFor(b);
-		}
 		if(this.minLaser > this.laserLength) {
 			this.minLaser = this.laserLength;
 			this.obj = b;
@@ -4342,10 +4355,6 @@ Laser.prototype = {
 	}
 	,redraw: function() {
 		flixel_util_FlxSpriteUtil.drawLine(this.plane,this.x,this.y,this.x + this.direction[0] * this.minLaser,this.y + this.direction[1] * this.minLaser,this.lineStyle);
-		if(this.bounceLaser != null) {
-			this.bounceLaser.redraw();
-		}
-		this.bounceLaser = null;
 		this.obj = null;
 		this.minLaser = 1000;
 		this.laserLength = 1000;
@@ -6717,6 +6726,82 @@ LaserPlane.prototype = $extend(flixel_FlxSprite.prototype,{
 	}
 	,__class__: LaserPlane
 });
+var Level = function(p) {
+	this.idCount = 0;
+	this.walls = new flixel_group_FlxTypedGroup();
+	this.blocks = new flixel_group_FlxTypedGroup();
+	this.plane = new LaserPlane();
+	this.player = p;
+	this.laser = new haxe_ds_IntMap();
+};
+$hxClasses["Level"] = Level;
+Level.__name__ = ["Level"];
+Level.prototype = {
+	walls: null
+	,idCount: null
+	,blocks: null
+	,player: null
+	,laser: null
+	,plane: null
+	,load: function(st) {
+		st.add(this.plane);
+		st.add(this.player);
+	}
+	,update: function(elapsed) {
+		flixel_FlxG.overlap(this.walls,this.player,($_=this.player,$bind($_,$_.onCollide)),flixel_FlxObject.separate);
+		flixel_FlxG.overlap(this.blocks,this.player,($_=this.player,$bind($_,$_.onCollide)),flixel_FlxObject.separate);
+		flixel_FlxG.overlap(this.walls,this.blocks,null,flixel_FlxObject.separate);
+		this.plane.redraw();
+		var l = this.laser.iterator();
+		while(l.hasNext()) {
+			var l1 = l.next();
+			l1.checkFor(this.player);
+			var w = new flixel_group_FlxTypedGroupIterator(this.walls.members,null);
+			while(w.hasNext()) {
+				var w1 = w.next();
+				l1.checkFor(js_Boot.__cast(w1 , source_Box));
+			}
+			var b = new flixel_group_FlxTypedGroupIterator(this.blocks.members,null);
+			while(b.hasNext()) {
+				var b1 = b.next();
+				l1.checkFor(js_Boot.__cast(b1 , source_Box));
+			}
+			l1.redraw();
+		}
+	}
+	,hasLaser: function(l) {
+		var this1 = this.laser;
+		var key = l.getID();
+		return this1.h.hasOwnProperty(key);
+	}
+	,show: function(fl) {
+		fl.add(this.player);
+		fl.add(this.plane);
+		var b = new flixel_group_FlxTypedGroupIterator(this.blocks.members,null);
+		while(b.hasNext()) {
+			var b1 = b.next();
+			fl.add(b1);
+		}
+		var w = new flixel_group_FlxTypedGroupIterator(this.walls.members,null);
+		while(w.hasNext()) {
+			var w1 = w.next();
+			fl.add(w1);
+		}
+	}
+	,addLaser: function(l) {
+		this.idCount++;
+		this.laser.h[this.idCount] = l;
+		return this.idCount;
+	}
+	,addBlock: function(b) {
+		this.blocks.add(b);
+	}
+	,addWall: function(b) {
+		b.set_immovable(true);
+		this.walls.add(b);
+	}
+	,__class__: Level
+};
 var _$List_ListNode = function(item,next) {
 	this.item = item;
 	this.next = next;
@@ -7742,53 +7827,26 @@ $hxClasses["PlayState"] = PlayState;
 PlayState.__name__ = ["PlayState"];
 PlayState.__super__ = flixel_FlxState;
 PlayState.prototype = $extend(flixel_FlxState.prototype,{
-	walls: null
-	,blocks: null
-	,player: null
-	,laser: null
-	,plane: null
+	current: null
 	,create: function() {
-		this.startLevel();
+		this.current = this.startLevel();
+		this.current.show(this);
 		flixel_FlxState.prototype.create.call(this);
 	}
 	,update: function(elapsed) {
-		flixel_FlxG.overlap(this.walls,this.player,($_=this.player,$bind($_,$_.onCollide)),flixel_FlxObject.separate);
-		flixel_FlxG.overlap(this.blocks,this.player,($_=this.player,$bind($_,$_.onCollide)),flixel_FlxObject.separate);
-		flixel_FlxG.overlap(this.walls,this.blocks,null,flixel_FlxObject.separate);
-		this.plane.redraw();
-		this.laser.checkFor(this.player);
-		var w = new flixel_group_FlxTypedGroupIterator(this.walls.members,null);
-		while(w.hasNext()) {
-			var w1 = w.next();
-			this.laser.checkFor(js_Boot.__cast(w1 , source_Box));
-		}
-		var b = new flixel_group_FlxTypedGroupIterator(this.blocks.members,null);
-		while(b.hasNext()) {
-			var b1 = b.next();
-			this.laser.checkFor(js_Boot.__cast(b1 , source_Box));
-		}
-		this.laser.redraw();
+		this.current.update(elapsed);
 		flixel_FlxState.prototype.update.call(this,elapsed);
 	}
 	,startLevel: function() {
-		this.walls = new flixel_group_FlxTypedGroup();
-		this.blocks = new flixel_group_FlxTypedGroup();
-		this.plane = new LaserPlane();
-		this.player = new Player(250,150);
-		this.laser = new Laser(300,190,Laser.DOWN,this.plane);
-		this.add(this.plane);
-		this.add(this.player);
-		var te = new source_Box(250,300,200,20);
-		var fl = new source_Box(200,350,100,20);
-		var ne = new source_Mirror(300,200,60,30);
-		fl.set_immovable(true);
-		te.set_immovable(true);
-		this.walls.add(fl);
-		this.walls.add(te);
-		this.blocks.add(ne);
-		this.add(fl);
-		this.add(te);
-		this.add(ne);
+		var nl = new Level(new Player(250,150));
+		nl.walls = new flixel_group_FlxTypedGroup();
+		nl.blocks = new flixel_group_FlxTypedGroup();
+		nl.plane = new LaserPlane();
+		nl.addLaser(new Laser(300,190,Laser.DOWN,nl.plane,nl));
+		nl.addWall(new source_Box(250,300,200,20));
+		nl.addWall(new source_Box(200,350,100,20));
+		nl.addBlock(new source_Mirror(300,200,60,30));
+		return nl;
 	}
 	,__class__: PlayState
 });
@@ -112946,6 +113004,7 @@ source_Mirror.prototype = $extend(source_Box.prototype,{
 	slope: null
 	,lineStyle: null
 	,checkLaser: function(l) {
+		var aspectRatio = this.get_width() / this.get_height();
 		if((l.direction == Laser.LEFT || l.direction == Laser.RIGHT) && (l.y > this.y && l.y < this.y + this.get_height())) {
 			if(l.direction == Laser.LEFT) {
 				if(this.x + this.get_width() < l.x) {
@@ -112967,7 +113026,7 @@ source_Mirror.prototype = $extend(source_Box.prototype,{
 			if(l.direction == Laser.DOWN) {
 				if(this.y > l.y) {
 					l.laserLength = this.y - l.y + (l.x - this.x) * (this.get_height() / this.get_width());
-					l.bounceLaser = new Laser(l.x,l.y + l.laserLength,Laser.RIGHT,l.plane);
+					l.addLaser(new Laser(l.x,l.y + l.laserLength,Laser.RIGHT,l.plane,l.getLevel()));
 				}
 			}
 		}
