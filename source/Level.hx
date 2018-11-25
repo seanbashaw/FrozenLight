@@ -38,9 +38,10 @@ class Level
 	}
 	public function update(elapsed:Float):Void
 	{
-		FlxG.collide(walls, player, player.onCollide);
-		FlxG.collide(blocks, player,player.onCollide);
+		FlxG.collide(blocks, player, player.onCollide);
 		FlxG.collide(walls, blocks);
+		FlxG.collide(blocks, blocks);
+		FlxG.collide(walls, player, player.onCollide);
 		plane.redraw();
 		for (l in laser){
 		l.checkFor(player);

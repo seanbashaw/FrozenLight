@@ -29,7 +29,7 @@ class PlayState extends FlxState
 		nl.addWall(new Box(250, 300, 400, 20));
 		nl.addWall(new Box(200, 350, 100, 20));
 		nl.addBlock(new Mirror(300, 200, 60, 30,true));
-		//nl.addBlock(new Mirror(400, 200, 60, 30, true));
+		nl.addBlock(new Glass(400, 200, 60, 30));
 		return nl;
 	}
 }

@@ -99,5 +99,4 @@ class Mirror extends Box
 		drawLine(tW, 0, tW, tH, lineStyle);
 		drawLine(0, tH*slope, tW, (1-slope)*tH, lineStyle);
 	}
-
 }
