@@ -70,6 +70,7 @@ class Level
 	public function addLaser(l:Laser):Int {
 		idCount++;
 		laser.set(idCount, l);
+		l.laserId = idCount;
 		return idCount;
 	}
 	public function addBlock(b:Box):Void{

@@ -18,10 +18,9 @@ class Laser
 	static public var DOWN = [0, 1];
 	public var bounceLaser:Laser = null;
 	public var direction = RIGHT;
-	private var laserId:Int = -1;
+	public var laserId:Int = -1;
 	public var x:Float;
 	public var y:Float;
-	
 	public var plane:LaserPlane;
 	public var obj:Box;
 	private var level:Level;
@@ -71,13 +70,20 @@ class Laser
 				obj = b;
 			}
 	}
+	public function removeBounce(){
+		if (bounceLaser != null){
+		level.removeLaser(bounceLaser);
+		bounceLaser.removeBounce();
+		bounceLaser = null;
+		}
+	}
 	public function redraw()
 	{
 		plane.drawLine(x,y, cast (x+direction[0] * minLaser), cast(y+direction[1] * minLaser), lineStyle);
 		if (bounceLaser!=null && !Std.is(obj, Mirror)){
-			level.removeLaser(bounceLaser);
-			bounceLaser = null;
+			removeBounce();
 		}
+		obj = null;
 		minLaser = 1000;
 		laserLength = 1000;
 	}

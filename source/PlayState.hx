@@ -25,10 +25,10 @@ class PlayState extends FlxState
 		nl.walls = new FlxGroup();
 		nl.blocks = new FlxGroup();
 		nl.plane = new LaserPlane();
-		nl.addLaser(new Laser(300, 190, Laser.DOWN, nl.plane, nl));
+		nl.addLaser(new Laser(500, 280, Laser.LEFT, nl.plane, nl));
 		nl.addWall(new Box(250, 300, 400, 20));
 		nl.addWall(new Box(200, 350, 100, 20));
-		nl.addBlock(new Mirror(300, 200, 60, 30));
+		nl.addBlock(new Mirror(300, 200, 60, 30,true));
 		//nl.addBlock(new Mirror(400, 200, 60, 30, true));
 		return nl;
 	}
